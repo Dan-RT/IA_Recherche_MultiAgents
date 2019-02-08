@@ -76,6 +76,7 @@ class ReflexAgent(Agent):
         "*** YOUR CODE HERE ***"
         return successorGameState.getScore()
 
+
 def scoreEvaluationFunction(currentGameState):
     """
       This default evaluation function just returns the score of the state.
@@ -85,6 +86,7 @@ def scoreEvaluationFunction(currentGameState):
       (not reflex agents).
     """
     return currentGameState.getScore()
+
 
 class MultiAgentSearchAgent(Agent):
     """
@@ -106,12 +108,14 @@ class MultiAgentSearchAgent(Agent):
         self.evaluationFunction = util.lookup(evalFn, globals())
         self.depth = int(depth)
 
+
 class MinimaxAgent(MultiAgentSearchAgent):
     """
       Your minimax agent (question 2)
     """
 
     def getAction(self, gameState):
+
         """
           Returns the minimax action from the current gameState using self.depth
           and self.evaluationFunction.
@@ -128,8 +132,74 @@ class MinimaxAgent(MultiAgentSearchAgent):
           gameState.getNumAgents():
             Returns the total number of agents in the game
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+
+        return self.maxPacman(gameState, self.depth, True)
+
+    def maxPacman(self, state, depth, surface):
+        # correspond a tour max
+
+        print("\n--\nturnPacman")
+
+        if state.isLose() or state.isWin():
+            print("END pacman")
+            return scoreEvaluationFunction(state)
+
+        best_utility = float("-inf")
+        action_utility = best_utility
+        # pacman agent -> 0
+        # ghost > 1
+        possible_actions = state.getLegalActions(0)
+        best_action = 0
+
+        for action in possible_actions:
+            action_utility = self.minPhantom(state.generateSuccessor(0, action), depth, state.getNumAgents()-1)
+            if action_utility > best_utility:
+                best_action = action
+                best_utility = action_utility
+
+        if surface:
+            return best_action
+        if depth == 0:
+            return best_action
+        else:
+            return best_utility
+
+    def minPhantom(self, state, depth, current_ghost):
+            # correspond a tour min
+
+            print("\nturnPhantom")
+            next_ghost = current_ghost - 1
+            if current_ghost < 1:
+                next_ghost = 0
+
+            print("current ghost: " + str(current_ghost))
+            print("current depth: " + str(depth))
+
+            if state.isLose() or state.isWin():
+                print("END phantom")
+                return scoreEvaluationFunction(state)
+
+            best_utility = float("inf")
+            action_utility = best_utility
+            possible_actions = state.getLegalActions(current_ghost)
+
+            for action in possible_actions:
+
+                if next_ghost == 0:
+                    # Si on arrive au num 0 de l'agent
+                    if depth == 0:
+                        action_utility = scoreEvaluationFunction(state)
+                    else:
+                        action_utility = self.maxPacman(state.generateSuccessor(current_ghost, action), depth-1, False)
+
+                else:
+                    action_utility = self.minPhantom(state.generateSuccessor(current_ghost, action), depth-1, next_ghost)
+                print("\n----------------\n")
+                if action_utility < best_utility:
+                    best_utility = action_utility
+
+            return best_utility
+
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
@@ -142,6 +212,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         """
         "*** YOUR CODE HERE ***"
         util.raiseNotDefined()
+
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
