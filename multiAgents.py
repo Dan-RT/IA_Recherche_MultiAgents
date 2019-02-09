@@ -136,7 +136,9 @@ class MinimaxAgent(MultiAgentSearchAgent):
         return self.Max_Value(gameState, self.depth, True)
 
     def Max_Value(self, state, depth, surface):
-
+        if surface:
+            print("\n\n-----------------------------------------\n")
+        print("\nMAX, depth: " + str(depth))
         if state.isWin() or state.isLose() or depth == 0:
             return self.evaluationFunction(state)
 
@@ -145,13 +147,13 @@ class MinimaxAgent(MultiAgentSearchAgent):
         best_action = 0
 
         possible_actions = state.getLegalActions(0)
-        print(possible_actions)
+        #print(possible_actions)
 
         for action in possible_actions:
-            for ghost in range(1, state.getNumAgents()):
-                utility_tmp = self.MAX(best_utility, self.Min_Value(state.generateSuccessor(0, action), depth, ghost))
-                if utility_tmp != best_utility:
-                    best_action = action
+            utility_tmp = self.MAX(best_utility, self.Min_Value(state.generateSuccessor(0, action), depth, state.getNumAgents()-1))
+            if utility_tmp != best_utility:
+                best_utility = utility_tmp
+                best_action = action
 
         if surface:
             return best_action
@@ -159,16 +161,23 @@ class MinimaxAgent(MultiAgentSearchAgent):
             return best_utility
 
     def Min_Value(self, state, depth, ghost):
+
+        print("MIN, ghost: " + str(ghost) + " depth: " + str(depth))
+
         if state.isWin() or state.isLose() or depth == 0:
             return self.evaluationFunction(state)
 
+        next_ghost = ghost-1
         best_utility = float("inf")
 
         possible_actions = state.getLegalActions(ghost)
-        print(possible_actions)
+        #print(possible_actions)
 
         for action in possible_actions:
-            best_utility = self.MIN(best_utility, self.Max_Value(state.generateSuccessor(ghost, action), depth-1, False))
+            if next_ghost == 0:
+                best_utility = self.MIN(best_utility, self.Max_Value(state.generateSuccessor(ghost, action), depth-1, False))
+            else:
+                best_utility = self.MIN(best_utility, self.Min_Value(state.generateSuccessor(ghost, action), depth, next_ghost))
         return best_utility
 
     def MAX(self, val1, val2):
@@ -182,10 +191,6 @@ class MinimaxAgent(MultiAgentSearchAgent):
             return val1
         else:
             return val2
-
-
-
-
 
     """ OLD FUNCTIONS """
 
@@ -316,7 +321,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
                     action_utility = self.initial_maxPacman(state.generateSuccessor(current_ghost, action), depth - 1, False)
                     print("\nback in possible_actions minPhantom depth: " + str(depth))
             else:
-                action_utility = self.minPhantom(state.generateSuccessor(current_ghost, action), depth - 1, next_ghost)
+                action_utility = self.minPhantom(state.generateSuccessor(current_ghost, action), depth - 1)
                 print("\nback in possible_actions minPhantom depth: " + str(depth))
 
             print("Comparison action_utility < best_utility : " + str(action_utility) + " / " + str(best_utility))
