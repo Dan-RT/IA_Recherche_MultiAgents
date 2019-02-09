@@ -87,7 +87,6 @@ class ReflexAgent(Agent):
 
         #The distance to dangerous ghosts is added to the score
         ghostPacmanDistances = [manhattanDistance(newPos, ghostState.getPosition()) for ghostState in newGhostStates]
-
         for i in range(len(ghostPacmanDistances)):
           if newScaredTimes[i] <= ghostPacmanDistances[i]:
             score += ghostPacmanDistances[i]
@@ -125,9 +124,64 @@ class MultiAgentSearchAgent(Agent):
         self.depth = int(depth)
 
 class MinimaxAgent(MultiAgentSearchAgent):
+
     """
       Your minimax agent (question 2)
     """
+
+    def minTurn(self, state, currentDepth, agent):
+        #If the state is a leaf, its score is returned
+        if state.isLose() or state.isWin():
+          return state.getScore()
+
+        #Since there is possibly several ghosts (min players) it is needed to check 
+        #if the next player is a max player (pacman) or a min player (a ghost)
+        nextAgent = agent + 1
+        if state.getNumAgents() - 1 == agent:
+          nextAgent = 0
+
+        bestUtility = float("inf")
+        utility = bestUtility
+
+        #All possible actions of the ghost are explored
+        actions = state.getLegalActions(agent)
+        for action in actions:
+
+          #If the next player is pacman maxTurn is called, else it is another ghost's turn so minTurn is called
+          if nextAgent == 0:
+            if currentDepth != self.depth-1:
+              utility = self.maxTurn(state.generateSuccessor(agent, action), currentDepth + 1)
+            else:
+              utility = self.evaluationFunction(state.generateSuccessor(agent, action))
+          else:
+            utility = self.minTurn(state.generateSuccessor(agent, action), currentDepth, nextAgent)
+
+          if bestUtility > utility:
+            bestUtility = utility
+        return bestUtility
+
+    def maxTurn(self, state, currentDepth):
+        #If the state is a leaf, its score is returned
+        if state.isWin() or state.isLose():
+          return state.getScore()
+
+        bestUtility = float("-inf")
+        utility = bestUtility
+
+        #All possible actions of pacman are explored
+        actions = state.getLegalActions(0)
+        for action in actions:
+          #After pacman's turn it is always a ghost's turn
+          utility = self.minTurn(state.generateSuccessor(0, action), currentDepth, 1)
+
+          if utility > bestUtility:
+            bestUtility = utility
+            bestAction = action
+
+        if currentDepth != 0:
+          return bestUtility
+        else:
+          return bestAction
 
     def getAction(self, gameState):
         """
@@ -146,8 +200,8 @@ class MinimaxAgent(MultiAgentSearchAgent):
           gameState.getNumAgents():
             Returns the total number of agents in the game
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        #Pacman (max player) is the first one to execute an action
+        return self.maxTurn(gameState, 0)
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
