@@ -150,12 +150,13 @@ class MinimaxAgent(MultiAgentSearchAgent):
         #print(possible_actions)
 
         for action in possible_actions:
-            utility_tmp = self.MAX(best_utility, self.Min_Value(state.generateSuccessor(0, action), depth, state.getNumAgents()-1))
-            if utility_tmp != best_utility:
+            utility_tmp = self.Min_Value(state.generateSuccessor(0, action), depth, state.getNumAgents() - 1)
+            if utility_tmp > best_utility:
                 best_utility = utility_tmp
                 best_action = action
 
         if surface:
+            print("\n\nReturning action: " + best_action + " - utility: " + str(best_utility))
             return best_action
         else:
             return best_utility
