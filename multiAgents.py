@@ -127,23 +127,130 @@ class MinimaxAgent(MultiAgentSearchAgent):
             agentIndex=0 means Pacman, ghosts are >= 1
 
           gameState.generateSuccessor(agentIndex, action):
-            Returns the successor game state after an agent takes an action
+            Returnsy the successor game state after an agent takes an action
 
           gameState.getNumAgents():
             Returns the total number of agents in the game
         """
 
-        return self.maxPacman(gameState, self.depth, True)
+        return self.Max_Value(gameState, self.depth, True)
+
+    def Max_Value(self, state, depth, surface):
+
+        if state.isWin() or state.isLose() or depth == 0:
+            return self.evaluationFunction(state)
+
+        best_utility = float("-inf")
+        utility_tmp = best_utility
+        best_action = 0
+
+        possible_actions = state.getLegalActions(0)
+        print(possible_actions)
+
+        for action in possible_actions:
+            for ghost in range(1, state.getNumAgents()):
+                utility_tmp = self.MAX(best_utility, self.Min_Value(state.generateSuccessor(0, action), depth, ghost))
+                if utility_tmp != best_utility:
+                    best_action = action
+
+        if surface:
+            return best_action
+        else:
+            return best_utility
+
+    def Min_Value(self, state, depth, ghost):
+        if state.isWin() or state.isLose() or depth == 0:
+            return self.evaluationFunction(state)
+
+        best_utility = float("inf")
+
+        possible_actions = state.getLegalActions(ghost)
+        print(possible_actions)
+
+        for action in possible_actions:
+            best_utility = self.MIN(best_utility, self.Max_Value(state.generateSuccessor(ghost, action), depth-1, False))
+        return best_utility
+
+    def MAX(self, val1, val2):
+        if val1 >= val2:
+            return val1
+        else:
+            return val2
+
+    def MIN(self, val1, val2):
+        if val1 <= val2:
+            return val1
+        else:
+            return val2
+
+
+
+
+
+    """ OLD FUNCTIONS """
 
     def maxPacman(self, state, depth, surface):
         # correspond a tour max
-
         if surface:
             print("\n\n\n------------------------------------------------------\n\n\nCALL TO PACMAN\n\n\n------------------------------------------------------\n\n\n")
 
+        if state.isLose() or state.isWin():
+            print("\nEND pacman")
+            return scoreEvaluationFunction(state)
+
+        best_utility = float("-inf")
+        action_utility = 0
+        best_action = 0
+        possible_actions = state.getLegalActions(0)
+        print(possible_actions)
+
+        for action in possible_actions:
+            action_utility = self.minPhantom(state.generateSuccessor(0, action), depth)
+
+            if action_utility > best_utility:
+                best_utility = action_utility
+                best_action = action
+
+        if surface:
+            if best_action == Directions.STOP:
+                print("STOP")
+            print("\nreturning best_action : " + str(best_action) + "\n\n\n------------------------------------------------------")
+            return best_action
+        else:
+            return best_utility
+
+    def minPhantom(self, state, depth):
+        # correspond a tour min
+
+        if state.isLose() or state.isWin() or depth == 0:
+            print("\nEND ghost")
+            return scoreEvaluationFunction(state)
+
+        best_utility = float("inf")
+        action_utility = 0
+        best_action = 0
+        possible_actions = state.getLegalActions(1)
+        print(possible_actions)
+
+        for action in possible_actions:
+            action_utility = self.maxPacman(state.generateSuccessor(1, action), depth-1, False)
+
+            if action_utility < best_utility:
+                best_utility = action_utility
+                best_action = action
+
+        return best_utility
+
+    def initial_maxPacman(self, state, depth, surface):
+        # correspond a tour max
+
+        if surface:
+            print(
+                "\n\n\n------------------------------------------------------\n\n\nCALL TO PACMAN\n\n\n------------------------------------------------------\n\n\n")
+
         print("\n--\nturnPacman depth: " + str(depth))
 
-        if state.isLose() or state.isWin():
+        if state.isLose() or state.isWin() or depth == 0:
             print("\nEND pacman")
             return scoreEvaluationFunction(state)
 
@@ -158,7 +265,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
         for action in possible_actions:
             print("\nIn possible_actions, turnPacman depth: " + str(depth))
             print("Action tested: " + str(action))
-            action_utility = self.minPhantom(state.generateSuccessor(0, action), depth, 1)##state.getNumAgents()-1)
+            action_utility = self.initial_minPhantom(state.generateSuccessor(0, action), depth, 1)  ##state.getNumAgents()-1)
             print("\nback in possible_actions turnPacman depth: " + str(depth))
 
             print("Comparison action_utility > best_utility : " + str(action_utility) + " / " + str(best_utility))
@@ -170,55 +277,56 @@ class MinimaxAgent(MultiAgentSearchAgent):
             print("best_action: " + str(best_action))
 
         if surface:
-            print("\nreturning best_action : " + str(best_action) + "\n\n\n------------------------------------------------------")
+            print("\nreturning best_action : " + str(
+                best_action) + "\n\n\n------------------------------------------------------")
             return best_action
         else:
             print("\nreturning best_utility : " + str(best_utility))
             return best_utility
 
-    def minPhantom(self, state, depth, current_ghost):
-            # correspond a tour min
+    def initial_minPhantom(self, state, depth, current_ghost):
+        # correspond a tour min
 
-            print("\nturnPhantom depth: " + str(depth))
-            next_ghost = current_ghost - 1
-            if current_ghost < 1:
-                next_ghost = 0
+        print("\nturnPhantom depth: " + str(depth))
+        next_ghost = current_ghost - 1
+        if current_ghost < 1:
+            next_ghost = 0
 
-            print("\ncurrent ghost: " + str(current_ghost))
-            print("current depth: " + str(depth))
+        print("\ncurrent ghost: " + str(current_ghost))
+        print("current depth: " + str(depth))
 
-            if state.isLose() or state.isWin():
-                print("\nEND phantom")
-                return scoreEvaluationFunction(state)
+        if state.isLose() or state.isWin() or depth == 0:
+            print("\nEND phantom")
+            return scoreEvaluationFunction(state)
 
-            best_utility = float("inf")
-            action_utility = best_utility
+        best_utility = float("inf")
+        action_utility = best_utility
 
-            for action in state.getLegalActions(current_ghost):
+        for action in state.getLegalActions(current_ghost):
 
-                print("\nIn possible_actions, minPhantom depth: " + str(depth))
-                print("Action tested: " + str(action))
+            print("\nIn possible_actions, minPhantom depth: " + str(depth))
+            print("Action tested: " + str(action))
 
-                print("\nnext ghost: " + str(next_ghost))
-                if next_ghost == 0:
-                    # Si on arrive au num 0 de l'agent c'est au tour de pacman
-                    if depth == 0:
-                        action_utility = scoreEvaluationFunction(state)
-                    else:
-                        action_utility = self.maxPacman(state.generateSuccessor(current_ghost, action), depth-1, False)
-                        print("\nback in possible_actions minPhantom depth: " + str(depth))
+            print("\nnext ghost: " + str(next_ghost))
+            if next_ghost == 0:
+                # Si on arrive au num 0 de l'agent c'est au tour de pacman
+                if depth == 0:
+                    action_utility = scoreEvaluationFunction(state)
                 else:
-                    action_utility = self.minPhantom(state.generateSuccessor(current_ghost, action), depth-1, next_ghost)
+                    action_utility = self.initial_maxPacman(state.generateSuccessor(current_ghost, action), depth - 1, False)
                     print("\nback in possible_actions minPhantom depth: " + str(depth))
+            else:
+                action_utility = self.minPhantom(state.generateSuccessor(current_ghost, action), depth - 1, next_ghost)
+                print("\nback in possible_actions minPhantom depth: " + str(depth))
 
-                print("Comparison action_utility < best_utility : " + str(action_utility) + " / " + str(best_utility))
-                if action_utility < best_utility:
-                    best_utility = action_utility
-                    print("best_utility remplacee")
-                print("\nbest_utility: " + str(best_utility))
-                print("\n----------------\n")
+            print("Comparison action_utility < best_utility : " + str(action_utility) + " / " + str(best_utility))
+            if action_utility < best_utility:
+                best_utility = action_utility
+                print("best_utility remplacee")
+            print("\nbest_utility: " + str(best_utility))
+            print("\n----------------\n")
 
-            return best_utility
+        return best_utility
 
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
