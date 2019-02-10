@@ -28,8 +28,6 @@ class ReflexAgent(Agent):
       it in any way you see fit, so long as you don't touch our method
       headers.
     """
-
-
     def getAction(self, gameState):
         """
         You do not need to change this method, but you're welcome to.
@@ -93,6 +91,7 @@ class ReflexAgent(Agent):
 
         return score+successorGameState.getScore()
 
+
 def scoreEvaluationFunction(currentGameState):
     """
       This default evaluation function just returns the score of the state.
@@ -102,6 +101,7 @@ def scoreEvaluationFunction(currentGameState):
       (not reflex agents).
     """
     return currentGameState.getScore()
+
 
 class MultiAgentSearchAgent(Agent):
     """
@@ -123,67 +123,14 @@ class MultiAgentSearchAgent(Agent):
         self.evaluationFunction = util.lookup(evalFn, globals())
         self.depth = int(depth)
 
+
 class MinimaxAgent(MultiAgentSearchAgent):
 
     """
       Your minimax agent (question 2)
     """
-
-    def minTurn(self, state, currentDepth, agent):
-        #If the state is a leaf, its score is returned
-        if state.isLose() or state.isWin():
-          return state.getScore()
-
-        #Since there is possibly several ghosts (min players) it is needed to check 
-        #if the next player is a max player (pacman) or a min player (a ghost)
-        nextAgent = agent + 1
-        if state.getNumAgents() - 1 == agent:
-          nextAgent = 0
-
-        bestUtility = float("inf")
-        utility = bestUtility
-
-        #All possible actions of the ghost are explored
-        actions = state.getLegalActions(agent)
-        for action in actions:
-
-          #If the next player is pacman maxTurn is called, else it is another ghost's turn so minTurn is called
-          if nextAgent == 0:
-            if currentDepth != self.depth-1:
-              utility = self.maxTurn(state.generateSuccessor(agent, action), currentDepth + 1)
-            else:
-              utility = self.evaluationFunction(state.generateSuccessor(agent, action))
-          else:
-            utility = self.minTurn(state.generateSuccessor(agent, action), currentDepth, nextAgent)
-
-          if bestUtility > utility:
-            bestUtility = utility
-        return bestUtility
-
-    def maxTurn(self, state, currentDepth):
-        #If the state is a leaf, its score is returned
-        if state.isWin() or state.isLose():
-          return state.getScore()
-
-        bestUtility = float("-inf")
-        utility = bestUtility
-
-        #All possible actions of pacman are explored
-        actions = state.getLegalActions(0)
-        for action in actions:
-          #After pacman's turn it is always a ghost's turn
-          utility = self.minTurn(state.generateSuccessor(0, action), currentDepth, 1)
-
-          if utility > bestUtility:
-            bestUtility = utility
-            bestAction = action
-
-        if currentDepth != 0:
-          return bestUtility
-        else:
-          return bestAction
-
     def getAction(self, gameState):
+
         """
           Returns the minimax action from the current gameState using self.depth
           and self.evaluationFunction.
@@ -195,13 +142,82 @@ class MinimaxAgent(MultiAgentSearchAgent):
             agentIndex=0 means Pacman, ghosts are >= 1
 
           gameState.generateSuccessor(agentIndex, action):
-            Returns the successor game state after an agent takes an action
+            Returnsy the successor game state after an agent takes an action
 
           gameState.getNumAgents():
             Returns the total number of agents in the game
         """
-        #Pacman (max player) is the first one to execute an action
-        return self.maxTurn(gameState, 0)
+        return self.Max_Value(gameState, 0, True)
+
+    def Max_Value(self, state, depth, surface):
+        if surface:
+            print("\n\n-----------------------------------------\n")
+        print("\nMAX, depth: " + str(depth))
+
+        if state.isWin() or state.isLose():
+            return self.evaluationFunction(state)
+
+        best_utility = float("-inf")
+        utility_tmp = best_utility
+        best_action = 0
+
+        possible_actions = state.getLegalActions(0)
+        #print(possible_actions)
+
+        for action in possible_actions:
+            utility_tmp = self.Min_Value(state.generateSuccessor(0, action), depth, 1)
+            if utility_tmp > best_utility:
+                best_utility = utility_tmp
+                best_action = action
+
+        if surface:
+            print("\n\nReturning action: " + best_action + " - utility: " + str(best_utility))
+            return best_action
+        else:
+            return best_utility
+
+    def Min_Value(self, state, depth, ghost):
+
+        print("MIN, ghost: " + str(ghost) + " depth: " + str(depth))
+
+        if state.isWin() or state.isLose():
+            return self.evaluationFunction(state)
+
+        if state.getNumAgents()-1 == ghost:
+            # pacman is next
+            next_ghost = 0
+        else:
+            next_ghost = ghost+1
+
+        best_utility = float("inf")
+        current_utility = best_utility
+
+        possible_actions = state.getLegalActions(ghost)
+        #print(possible_actions)
+
+        for action in possible_actions:
+            if next_ghost == 0:
+                if depth != self.depth-1:
+                    current_utility = self.Max_Value(state.generateSuccessor(ghost, action), depth+1, False)
+                else:
+                    current_utility = self.evaluationFunction(state.generateSuccessor(ghost, action))
+            else:
+                current_utility = self.Min_Value(state.generateSuccessor(ghost, action), depth, next_ghost)
+
+            best_utility = self.MIN(best_utility, current_utility)
+        return best_utility
+
+    def MAX(self, val1, val2):
+        if val1 >= val2:
+            return val1
+        else:
+            return val2
+
+    def MIN(self, val1, val2):
+        if val1 <= val2:
+            return val1
+        else:
+            return val2
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
@@ -214,6 +230,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         """
         "*** YOUR CODE HERE ***"
         util.raiseNotDefined()
+
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
