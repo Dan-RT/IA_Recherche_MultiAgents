@@ -152,7 +152,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
     def Max_Value(self, state, depth, surface):
         if surface:
             print("\n\n-----------------------------------------\n")
-        print("\nMAX, depth: " + str(depth))
+        #print("\nMAX, depth: " + str(depth))
 
         if state.isWin() or state.isLose():
             return self.evaluationFunction(state)
@@ -171,14 +171,14 @@ class MinimaxAgent(MultiAgentSearchAgent):
                 best_action = action
 
         if surface:
-            print("\n\nReturning action: " + best_action + " - utility: " + str(best_utility))
+            #print("\n\nReturning action: " + best_action + " - utility: " + str(best_utility))
             return best_action
         else:
             return best_utility
 
     def Min_Value(self, state, depth, ghost):
 
-        print("MIN, ghost: " + str(ghost) + " depth: " + str(depth))
+        #print("MIN, ghost: " + str(ghost) + " depth: " + str(depth))
 
         if state.isWin() or state.isLose():
             return self.evaluationFunction(state)
@@ -204,20 +204,21 @@ class MinimaxAgent(MultiAgentSearchAgent):
             else:
                 current_utility = self.Min_Value(state.generateSuccessor(ghost, action), depth, next_ghost)
 
-            best_utility = self.MIN(best_utility, current_utility)
+            best_utility = MIN(best_utility, current_utility)
         return best_utility
 
-    def MAX(self, val1, val2):
-        if val1 >= val2:
-            return val1
-        else:
-            return val2
 
-    def MIN(self, val1, val2):
-        if val1 <= val2:
-            return val1
-        else:
-            return val2
+def MAX(val1, val2):
+    if val1 >= val2:
+        return val1
+    else:
+        return val2
+
+def MIN(val1, val2):
+    if val1 <= val2:
+        return val1
+    else:
+        return val2
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
@@ -228,8 +229,71 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         """
           Returns the minimax action using self.depth and self.evaluationFunction
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+
+        return self.Max_Value(gameState, 0, True, float("-inf"), float("inf"))
+
+    def Max_Value(self, state, depth, surface, alpha, beta):
+        #if surface:
+            #print("\n\n-----------------------------------------\n")
+        #print("\nMAX, depth: " + str(depth))
+
+        if state.isWin() or state.isLose():
+            return self.evaluationFunction(state)
+
+        best_utility = float("-inf")
+        utility_tmp = best_utility
+        best_action = 0
+
+        possible_actions = state.getLegalActions(0)
+        #print(possible_actions)
+
+        for action in possible_actions:
+            utility_tmp = self.Min_Value(state.generateSuccessor(0, action), depth, 1, alpha, beta)
+            if utility_tmp > best_utility:
+                best_utility = utility_tmp
+                best_action = action
+            if best_utility > beta:
+                #print("\n\nReturning action: " + best_action + " - utility: " + str(best_utility))
+                return best_utility
+            alpha = MAX(alpha, best_utility)
+        if surface:
+            #print("\n\nReturning action: " + best_action + " - utility: " + str(best_utility))
+            return best_action
+        else:
+            return best_utility
+
+    def Min_Value(self, state, depth, ghost, alpha, beta):
+
+        #print("MIN, ghost: " + str(ghost) + " depth: " + str(depth))
+
+        if state.isWin() or state.isLose():
+            return self.evaluationFunction(state)
+
+        if state.getNumAgents()-1 == ghost:
+            # pacman is next
+            next_ghost = 0
+        else:
+            next_ghost = ghost+1
+
+        best_utility = float("inf")
+        current_utility = best_utility
+
+        possible_actions = state.getLegalActions(ghost)
+        #print(possible_actions)
+
+        for action in possible_actions:
+            if next_ghost == 0:
+                if depth != self.depth-1:
+                    current_utility = self.Max_Value(state.generateSuccessor(ghost, action), depth+1, False, alpha, beta)
+                else:
+                    current_utility = self.evaluationFunction(state.generateSuccessor(ghost, action))
+            else:
+                current_utility = self.Min_Value(state.generateSuccessor(ghost, action), depth, next_ghost, alpha, beta)
+            best_utility = MIN(best_utility, current_utility)
+            if best_utility < alpha:
+                return best_utility
+            beta = MIN(beta, best_utility)
+        return best_utility
 
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
