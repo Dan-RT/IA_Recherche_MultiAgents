@@ -132,14 +132,14 @@ class MinimaxAgent(MultiAgentSearchAgent):
           gameState.getNumAgents():
             Returns the total number of agents in the game
         """
-
-        return self.Max_Value(gameState, self.depth, True)
+        return self.Max_Value(gameState, 0, True)
 
     def Max_Value(self, state, depth, surface):
         if surface:
             print("\n\n-----------------------------------------\n")
         print("\nMAX, depth: " + str(depth))
-        if state.isWin() or state.isLose() or depth == 0:
+
+        if state.isWin() or state.isLose():
             return self.evaluationFunction(state)
 
         best_utility = float("-inf")
@@ -150,7 +150,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
         #print(possible_actions)
 
         for action in possible_actions:
-            utility_tmp = self.Min_Value(state.generateSuccessor(0, action), depth, state.getNumAgents() - 1)
+            utility_tmp = self.Min_Value(state.generateSuccessor(0, action), depth, 1)
             if utility_tmp > best_utility:
                 best_utility = utility_tmp
                 best_action = action
@@ -165,20 +165,31 @@ class MinimaxAgent(MultiAgentSearchAgent):
 
         print("MIN, ghost: " + str(ghost) + " depth: " + str(depth))
 
-        if state.isWin() or state.isLose() or depth == 0:
+        if state.isWin() or state.isLose():
             return self.evaluationFunction(state)
 
-        next_ghost = ghost-1
+        if state.getNumAgents()-1 == ghost:
+            # pacman is next
+            next_ghost = 0
+        else:
+            next_ghost = ghost+1
+
         best_utility = float("inf")
+        current_utility = best_utility
 
         possible_actions = state.getLegalActions(ghost)
         #print(possible_actions)
 
         for action in possible_actions:
             if next_ghost == 0:
-                best_utility = self.MIN(best_utility, self.Max_Value(state.generateSuccessor(ghost, action), depth-1, False))
+                if depth != self.depth-1:
+                    current_utility = self.Max_Value(state.generateSuccessor(ghost, action), depth+1, False)
+                else:
+                    current_utility = self.evaluationFunction(state.generateSuccessor(ghost, action))
             else:
-                best_utility = self.MIN(best_utility, self.Min_Value(state.generateSuccessor(ghost, action), depth, next_ghost))
+                current_utility = self.Min_Value(state.generateSuccessor(ghost, action), depth, next_ghost)
+
+            best_utility = self.MIN(best_utility, current_utility)
         return best_utility
 
     def MAX(self, val1, val2):
@@ -192,147 +203,6 @@ class MinimaxAgent(MultiAgentSearchAgent):
             return val1
         else:
             return val2
-
-    """ OLD FUNCTIONS """
-
-    def maxPacman(self, state, depth, surface):
-        # correspond a tour max
-        if surface:
-            print("\n\n\n------------------------------------------------------\n\n\nCALL TO PACMAN\n\n\n------------------------------------------------------\n\n\n")
-
-        if state.isLose() or state.isWin():
-            print("\nEND pacman")
-            return scoreEvaluationFunction(state)
-
-        best_utility = float("-inf")
-        action_utility = 0
-        best_action = 0
-        possible_actions = state.getLegalActions(0)
-        print(possible_actions)
-
-        for action in possible_actions:
-            action_utility = self.minPhantom(state.generateSuccessor(0, action), depth)
-
-            if action_utility > best_utility:
-                best_utility = action_utility
-                best_action = action
-
-        if surface:
-            if best_action == Directions.STOP:
-                print("STOP")
-            print("\nreturning best_action : " + str(best_action) + "\n\n\n------------------------------------------------------")
-            return best_action
-        else:
-            return best_utility
-
-    def minPhantom(self, state, depth):
-        # correspond a tour min
-
-        if state.isLose() or state.isWin() or depth == 0:
-            print("\nEND ghost")
-            return scoreEvaluationFunction(state)
-
-        best_utility = float("inf")
-        action_utility = 0
-        best_action = 0
-        possible_actions = state.getLegalActions(1)
-        print(possible_actions)
-
-        for action in possible_actions:
-            action_utility = self.maxPacman(state.generateSuccessor(1, action), depth-1, False)
-
-            if action_utility < best_utility:
-                best_utility = action_utility
-                best_action = action
-
-        return best_utility
-
-    def initial_maxPacman(self, state, depth, surface):
-        # correspond a tour max
-
-        if surface:
-            print(
-                "\n\n\n------------------------------------------------------\n\n\nCALL TO PACMAN\n\n\n------------------------------------------------------\n\n\n")
-
-        print("\n--\nturnPacman depth: " + str(depth))
-
-        if state.isLose() or state.isWin() or depth == 0:
-            print("\nEND pacman")
-            return scoreEvaluationFunction(state)
-
-        best_utility = float("-inf")
-        action_utility = best_utility
-        # pacman agent -> 0
-        # ghost > 1
-        possible_actions = state.getLegalActions(0)
-        best_action = 0
-        print(possible_actions)
-
-        for action in possible_actions:
-            print("\nIn possible_actions, turnPacman depth: " + str(depth))
-            print("Action tested: " + str(action))
-            action_utility = self.initial_minPhantom(state.generateSuccessor(0, action), depth, 1)  ##state.getNumAgents()-1)
-            print("\nback in possible_actions turnPacman depth: " + str(depth))
-
-            print("Comparison action_utility > best_utility : " + str(action_utility) + " / " + str(best_utility))
-            if action_utility > best_utility:
-                best_action = action
-                best_utility = action_utility
-                print("best_utility remplacee")
-            print("\nbest_utility: " + str(best_utility))
-            print("best_action: " + str(best_action))
-
-        if surface:
-            print("\nreturning best_action : " + str(
-                best_action) + "\n\n\n------------------------------------------------------")
-            return best_action
-        else:
-            print("\nreturning best_utility : " + str(best_utility))
-            return best_utility
-
-    def initial_minPhantom(self, state, depth, current_ghost):
-        # correspond a tour min
-
-        print("\nturnPhantom depth: " + str(depth))
-        next_ghost = current_ghost - 1
-        if current_ghost < 1:
-            next_ghost = 0
-
-        print("\ncurrent ghost: " + str(current_ghost))
-        print("current depth: " + str(depth))
-
-        if state.isLose() or state.isWin() or depth == 0:
-            print("\nEND phantom")
-            return scoreEvaluationFunction(state)
-
-        best_utility = float("inf")
-        action_utility = best_utility
-
-        for action in state.getLegalActions(current_ghost):
-
-            print("\nIn possible_actions, minPhantom depth: " + str(depth))
-            print("Action tested: " + str(action))
-
-            print("\nnext ghost: " + str(next_ghost))
-            if next_ghost == 0:
-                # Si on arrive au num 0 de l'agent c'est au tour de pacman
-                if depth == 0:
-                    action_utility = scoreEvaluationFunction(state)
-                else:
-                    action_utility = self.initial_maxPacman(state.generateSuccessor(current_ghost, action), depth - 1, False)
-                    print("\nback in possible_actions minPhantom depth: " + str(depth))
-            else:
-                action_utility = self.minPhantom(state.generateSuccessor(current_ghost, action), depth - 1)
-                print("\nback in possible_actions minPhantom depth: " + str(depth))
-
-            print("Comparison action_utility < best_utility : " + str(action_utility) + " / " + str(best_utility))
-            if action_utility < best_utility:
-                best_utility = action_utility
-                print("best_utility remplacee")
-            print("\nbest_utility: " + str(best_utility))
-            print("\n----------------\n")
-
-        return best_utility
 
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
