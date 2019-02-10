@@ -15,6 +15,7 @@
 from util import manhattanDistance
 from game import Directions
 import random, util
+import time
 
 from game import Agent
 
@@ -27,8 +28,6 @@ class ReflexAgent(Agent):
       it in any way you see fit, so long as you don't touch our method
       headers.
     """
-
-
     def getAction(self, gameState):
         """
         You do not need to change this method, but you're welcome to.
@@ -73,8 +72,24 @@ class ReflexAgent(Agent):
         newGhostStates = successorGameState.getGhostStates()
         newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
 
-        "*** YOUR CODE HERE ***"
-        return successorGameState.getScore()
+        score = 0
+
+        #If a ghost is present return a score of 0
+        if newPos in [ghostState.getPosition() for ghostState in newGhostStates]:
+          return 0
+        
+        #The distance to the closest food is substracted to the score
+        if len(newFood.asList()) != 0:
+          successorDistanceToClosestFood = min([manhattanDistance(newPos, foodPosition) for foodPosition in newFood.asList()])
+          score -= successorDistanceToClosestFood
+
+        #The distance to dangerous ghosts is added to the score
+        ghostPacmanDistances = [manhattanDistance(newPos, ghostState.getPosition()) for ghostState in newGhostStates]
+        for i in range(len(ghostPacmanDistances)):
+          if newScaredTimes[i] <= ghostPacmanDistances[i]:
+            score += ghostPacmanDistances[i]
+
+        return score+successorGameState.getScore()
 
 
 def scoreEvaluationFunction(currentGameState):
@@ -110,10 +125,10 @@ class MultiAgentSearchAgent(Agent):
 
 
 class MinimaxAgent(MultiAgentSearchAgent):
+
     """
       Your minimax agent (question 2)
     """
-
     def getAction(self, gameState):
 
         """
@@ -203,7 +218,6 @@ class MinimaxAgent(MultiAgentSearchAgent):
             return val1
         else:
             return val2
-
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
