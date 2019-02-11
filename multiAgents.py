@@ -150,9 +150,6 @@ class MinimaxAgent(MultiAgentSearchAgent):
         return self.Max_Value(gameState, 0, True)
 
     def Max_Value(self, state, depth, surface):
-        if surface:
-            print("\n\n-----------------------------------------\n")
-        #print("\nMAX, depth: " + str(depth))
 
         if state.isWin() or state.isLose():
             return self.evaluationFunction(state)
@@ -162,7 +159,6 @@ class MinimaxAgent(MultiAgentSearchAgent):
         best_action = 0
 
         possible_actions = state.getLegalActions(0)
-        #print(possible_actions)
 
         for action in possible_actions:
             utility_tmp = self.Min_Value(state.generateSuccessor(0, action), depth, 1)
@@ -171,14 +167,11 @@ class MinimaxAgent(MultiAgentSearchAgent):
                 best_action = action
 
         if surface:
-            #print("\n\nReturning action: " + best_action + " - utility: " + str(best_utility))
             return best_action
         else:
             return best_utility
 
     def Min_Value(self, state, depth, ghost):
-
-        #print("MIN, ghost: " + str(ghost) + " depth: " + str(depth))
 
         if state.isWin() or state.isLose():
             return self.evaluationFunction(state)
@@ -300,6 +293,60 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
     """
       Your expectimax agent (question 4)
     """
+    def Max_Value(self, state, depth, surface):
+        if state.isWin() or state.isLose():
+            return self.evaluationFunction(state)
+
+        best_utility = float("-inf")
+        utility_tmp = best_utility
+
+        possible_actions = state.getLegalActions(0)
+
+        for action in possible_actions:
+            utility_tmp = self.Min_Value(state.generateSuccessor(0, action), depth, 1)
+            if utility_tmp > best_utility:
+                best_utility = utility_tmp
+                best_action = action
+
+        if surface:
+            return best_action
+        else:
+            return best_utility
+
+    def Min_Value(self, state, depth, ghost):
+        if state.isLose():
+            return self.evaluationFunction(state)
+
+        if state.getNumAgents()-1 == ghost:
+            # pacman is next
+            next_ghost = 0
+        else:
+            next_ghost = ghost+1
+
+        current_utility = float("inf")
+        possible_actions = state.getLegalActions(ghost)
+       # print(possible_actions)
+        if len(possible_actions) > 0:
+           uniformProbability = 1.0/ len(possible_actions)
+        for action in possible_actions:
+            if next_ghost == 0:
+                if depth != self.depth-1:
+                    current_utility = self.Max_Value(state.generateSuccessor(ghost, action), depth+1, False)
+                    current_utility += uniformProbability * current_utility
+                else:
+                    current_utility = self.evaluationFunction(state.generateSuccessor(ghost, action))
+                    current_utility += uniformProbability * current_utility
+            else:
+                current_utility = self.Min_Value(state.generateSuccessor(ghost, action), depth, next_ghost)
+                current_utility += uniformProbability * current_utility
+
+        return current_utility
+
+    def MIN(self, val1, val2):
+        if val1 <= val2:
+            return val1
+        else:
+            return val2
 
     def getAction(self, gameState):
         """
@@ -309,7 +356,12 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
           legal moves.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        """
+          Returns the expectimax action using self.depth and self.evaluationFunction
+          All ghosts should be modeled as choosing uniformly at random from their
+          legal moves.
+        """
+        return self.Max_Value(gameState, 0, True)
 
 def betterEvaluationFunction(currentGameState):
     """
