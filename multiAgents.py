@@ -159,7 +159,6 @@ class MinimaxAgent(MultiAgentSearchAgent):
         best_action = 0
 
         possible_actions = state.getLegalActions(0)
-        #print(possible_actions)
 
         for action in possible_actions:
             utility_tmp = self.Min_Value(state.generateSuccessor(0, action), depth, 1)
@@ -232,14 +231,12 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
     """
     def Max_Value(self, state, depth, surface):
         if state.isWin() or state.isLose():
-            return state.getScore()
+            return self.evaluationFunction(state)
 
         best_utility = float("-inf")
         utility_tmp = best_utility
-        best_action = 0
 
         possible_actions = state.getLegalActions(0)
-        #print(possible_actions)
 
         for action in possible_actions:
             utility_tmp = self.Min_Value(state.generateSuccessor(0, action), depth, 1)
@@ -254,7 +251,7 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
 
     def Min_Value(self, state, depth, ghost):
         if state.isLose():
-            return state.getScore()
+            return self.evaluationFunction(state)
 
         if state.getNumAgents()-1 == ghost:
             # pacman is next
@@ -262,14 +259,12 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         else:
             next_ghost = ghost+1
 
-        #best_utility = float("inf")
         current_utility = float("inf")
-
         possible_actions = state.getLegalActions(ghost)
-        #print(possible_actions)
-
+       # print(possible_actions)
+        if len(possible_actions) > 0:
+           uniformProbability = 1.0/ len(possible_actions)
         for action in possible_actions:
-            uniformProbability = 1.0/ len(possible_actions)
             if next_ghost == 0:
                 if depth != self.depth-1:
                     current_utility = self.Max_Value(state.generateSuccessor(ghost, action), depth+1, False)
@@ -282,6 +277,12 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
                 current_utility += uniformProbability * current_utility
 
         return current_utility
+
+    def MIN(self, val1, val2):
+        if val1 <= val2:
+            return val1
+        else:
+            return val2
 
     def getAction(self, gameState):
         """
