@@ -16,6 +16,7 @@ from util import manhattanDistance
 from game import Directions
 import random, util
 import time
+from pacman import SCARED_TIME
 
 from game import Agent
 
@@ -371,7 +372,53 @@ def betterEvaluationFunction(currentGameState):
       DESCRIPTION: <write something here so we know what you did>
     """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    # Useful information you can extract from a GameState (pacman.py)
+    pos = currentGameState.getPacmanPosition()
+    food = currentGameState.getFood()
+    ghostStates = currentGameState.getGhostStates()
+    scaredTimes = [ghostState.scaredTimer for ghostState in ghostStates]
+
+    score = 0
+
+    #If a ghost is present return a score of 0
+    if currentGameState.isLose():
+        return 0
+
+    #If the state is a win returns a score of +inf
+    if currentGameState.isWin():
+        return float("inf")
+    
+    numberOfFoodLeft = len(food.asList())
+    averageDistanceTofood = 0
+    hasFood = False
+    if pos in food.asList():
+        hasFood = True
+    #The distance to the closest food is substracted to the score
+    if len(food.asList()) != 0:
+        distanceToClosestFood = min([manhattanDistance(pos, foodPosition) for foodPosition in food.asList()])
+        averageDistanceTofood = sum([manhattanDistance(pos, foodPosition) for foodPosition in food.asList()]) / float(len(food.asList()))
+    
+
+    numberOfDangerousGhosts = 0
+    distancesToDangerousGhosts = []
+    #The distance to dangerous ghosts is added to the score
+    ghostPacmanDistances = [manhattanDistance(pos, ghostState.getPosition()) for ghostState in ghostStates]
+    for i in range(len(ghostPacmanDistances)):
+        if scaredTimes[i] <= ghostPacmanDistances[i]:
+            numberOfDangerousGhosts += 1
+            distancesToDangerousGhosts.append(ghostPacmanDistances[i])
+            distancesToDangerousGhosts.sort()
+            if distancesToDangerousGhosts[0] < 2:
+                score = 0
+            else:
+                score = distancesToDangerousGhosts[0] 
+
+    score -= distanceToClosestFood*3 - averageDistanceTofood + random.randint(1,3)
+    if hasFood:
+        score = score * 1.2 
+
+
+    return score+currentGameState.getScore()
 
 # Abbreviation
 better = betterEvaluationFunction
