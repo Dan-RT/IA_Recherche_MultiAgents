@@ -296,12 +296,14 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
     """
       Your expectimax agent (question 4)
     """
+
     def max_pacman_expectimax(self, state, depth, surface):
         if state.isWin() or state.isLose():
             return self.evaluationFunction(state)
 
         best_utility = float("-inf")
         utility_tmp = best_utility
+        best_action = 0
 
         possible_actions = state.getLegalActions(0)
 
@@ -317,7 +319,7 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
             return best_utility
 
     def min_ghost_expectimax(self, state, depth, ghost):
-        if state.isLose():
+        if state.isWin() or state.isLose():
             return self.evaluationFunction(state)
 
         if state.getNumAgents()-1 == ghost:
@@ -326,24 +328,23 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         else:
             next_ghost = ghost+1
 
-        current_utility = float("inf")
+        current_utility = 0 #float("inf")
         possible_actions = state.getLegalActions(ghost)
-       # print(possible_actions)
-        if len(possible_actions) > 0:
-           uniformProbability = 1.0/ len(possible_actions)
+        nb_possible_actions = len(possible_actions)
+
+        if nb_possible_actions == 0:
+            return self.evaluationFunction(state)
+
         for action in possible_actions:
             if next_ghost == 0:
                 if depth != self.depth-1:
-                    current_utility = self.max_pacman_expectimax(state.generateSuccessor(ghost, action), depth+1, False)
-                    current_utility += uniformProbability * current_utility
+                    current_utility = current_utility + self.max_pacman_expectimax(state.generateSuccessor(ghost, action), depth+1, False)
                 else:
-                    current_utility = self.evaluationFunction(state.generateSuccessor(ghost, action))
-                    current_utility += uniformProbability * current_utility
+                    current_utility = current_utility + self.evaluationFunction(state.generateSuccessor(ghost, action))
             else:
-                current_utility = self.min_ghost_expectimax(state.generateSuccessor(ghost, action), depth, next_ghost)
-                current_utility += uniformProbability * current_utility
+                current_utility = current_utility + self.min_ghost_expectimax(state.generateSuccessor(ghost, action), depth, next_ghost)
 
-        return current_utility
+        return current_utility / float(nb_possible_actions)
 
     def getAction(self, gameState):
         """
@@ -352,12 +353,13 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
           All ghosts should be modeled as choosing uniformly at random from their
           legal moves.
         """
-        "*** YOUR CODE HERE ***"
+
         """
           Returns the expectimax action using self.depth and self.evaluationFunction
           All ghosts should be modeled as choosing uniformly at random from their
           legal moves.
         """
+
         return self.max_pacman_expectimax(gameState, 0, True)
 
 def betterEvaluationFunction(currentGameState):
